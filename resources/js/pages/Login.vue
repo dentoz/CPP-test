@@ -66,7 +66,7 @@ export default {
     const verified = query.verified || false;
 
     if (Object.keys(prefetchedData).length > 0 && verified) {
-      localStorage.setItem('token', prefetchedData.token);
+      localStorage.setItem('token', JSON.stringify(prefetchedData));
     }
 
     if (Object.keys(prefetchedData).length > 0 && !prefetchedData?.exists && verified) {
