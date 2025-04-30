@@ -17,6 +17,7 @@ class AddGoogleIdToUsersTable extends Migration
             $table->text('google_id')->nullable()->after('email');
             $table->string('role')->default('user')->after('google_id');
             $table->text('avatar')->nullable()->after('role');
+            $table->string('nick_name')->nullable()->after('avatar');
         });
     }
 

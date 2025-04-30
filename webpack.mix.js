@@ -15,4 +15,4 @@ mix.js("resources/js/app.js", "public/js")
     .vue() // add this for Vue 3 support
     .postCss("resources/css/app.css", "public/css", [
         //
-    ]);
+    ])

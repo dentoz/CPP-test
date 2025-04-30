@@ -2,8 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Laravel\Socialite\Facades\Socialite;
-use Illuminate\Support\Facades\Auth;
-use App\Models\User;
+use App\Http\Controllers\Auth\GoogleAuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,30 +17,23 @@ use App\Models\User;
 
 // Redirect to Google
 Route::get('/auth/redirect/google', function () {
-    return Socialite::driver('google')->redirect();
+    return Socialite::driver('google')->with(['prompt' => 'select_account'])->redirect();
 });
 
 // Google callback
-Route::get('/auth/google/callback', function () {
-    $googleUser = Socialite::driver('google')->stateless()->user();
+Route::get('/auth/google/callback', [GoogleAuthController::class, 'handleCallback']);
+Route::get('/logout', [GoogleAuthController::class, 'logout']);
 
-    // Find or create user
-    $user = User::firstOrCreate(
-        ['email' => $googleUser->getEmail()],
-        [
-            'name' => $googleUser->getName(),
-            'password' => bcrypt('password'),
-            'role' => 'user',
-            'google_id' => $googleUser->id,
-            'avatar' => $googleUser->avatar,
-        ]
-    );
-
-    Auth::login($user);
-
-    return redirect('/dashboard'); // or return a token if you use API
-});
+Route::get('/login', function () {
+    return response()->json([
+        'status' => 403,
+        'message' => 'credentials not provided',
+        'error' => 'forbidden',
+        'data' => []
+    ], 403);
+})->name('login');
 
 Route::get('/{any}', function () {
-    return view('welcome');
+    $data = session()->get('data') ?? [];
+    return view('welcome', compact('data'));
 })->where('any', '.*');
