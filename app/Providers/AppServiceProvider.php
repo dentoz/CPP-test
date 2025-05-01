@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Kreait\Firebase\Factory;
+use Kreait\Firebase\Contract\Messaging;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -13,7 +15,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->singleton(Messaging::class, function ($app) {
+            return (new Factory)
+                ->withServiceAccount(config('firebase.credentials'))
+                ->createMessaging();
+        });
     }
 
     /**

@@ -24,6 +24,7 @@ class GoogleAuthController extends Controller
                 'role' => 'user',
                 'google_id' => $googleUser->id,
                 'avatar' => $googleUser->avatar,
+                'active' => 1,
             ]
         );
     
@@ -38,6 +39,7 @@ class GoogleAuthController extends Controller
             'name' => $user->name,
             'email' => $user->email,
             'avatar' => $user->avatar,
+            'nick_name' => $user->nick_name
         ];
         if (!$user->wasRecentlyCreated) {
             $data['exists'] = true;

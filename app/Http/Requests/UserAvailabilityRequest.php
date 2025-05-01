@@ -26,6 +26,7 @@ class UserAvailabilityRequest extends FormRequest
         return [
             'nickname' => 'required|string',
             'google_id' => 'required|string',
+            'fcmToken' => 'required|string'
         ];
     }
 

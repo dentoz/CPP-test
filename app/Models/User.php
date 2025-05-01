@@ -25,6 +25,8 @@ class User extends Authenticatable
         'google_id',
         'avatar',
         'nickname',
+        'active',
+        'fcm_token'
     ];
 
     /**
@@ -45,4 +47,9 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    public function chatRooms()
+    {
+        return $this->belongsToMany(ChatRoom::class, 'chat_room_users');
+    }
 }

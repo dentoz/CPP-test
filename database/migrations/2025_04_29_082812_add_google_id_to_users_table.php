@@ -18,6 +18,8 @@ class AddGoogleIdToUsersTable extends Migration
             $table->string('role')->default('user')->after('google_id');
             $table->text('avatar')->nullable()->after('role');
             $table->string('nick_name')->nullable()->after('avatar');
+            $table->smallInteger('active')->default(0)->after('nick_name');
+            $table->text('fcm_token')->nullable();
         });
     }
 
