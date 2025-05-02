@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Auth\GoogleAuthController;
+use App\Http\Controllers\Broadcast\BroadcastAuthController;
 use App\Http\Controllers\chat\ChatRoomController;
 use App\Http\Controllers\Chat\MessageController;
 use App\Http\Controllers\Chat\InvitationController;
@@ -31,5 +33,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/chat-rooms/{chatRoom}/messages', [MessageController::class, 'index']);
     Route::post('/chat-rooms/{chatRoom}/messages', [MessageController::class, 'store']);
     Route::post('/chat-rooms/new', [MessageController::class, 'newChat']);
+    Route::post('/broadcasting/auth', [BroadcastAuthController::class, 'authenticate']);
+    Route::get('/logout', [GoogleAuthController::class, 'logout']);
 });
     

@@ -5,7 +5,7 @@
             <section class="main-content">
                 <h2>Chat Room</h2>
                 <div class="chatroom-action">
-                    <v-btn>
+                    <v-btn @click="redirectTo('/chatroom/new-chatroom')">
                         <div class="chatroom-item create">
                             <div class="chatroom-icon">
                                 <v-icon size="40" color="#f8f9fa">mdi-plus</v-icon>
@@ -46,7 +46,9 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import Header from '../components/HeaderComponent.vue';
 import Sidebar from '../components/sidebarComponent.vue';
+import { useRouter } from 'vue-router';
 
+const router = useRouter();
 const showSidebar = ref(false);
 const toggleSidebar = (state) => {
     showSidebar.value = state;
@@ -58,6 +60,10 @@ const handleClickOutside = (event) => {
         showSidebar.value = false;
     }
 };
+
+const redirectTo = (path) => {
+    return router.push(path);
+}
 
 onMounted(async () => {
     document.addEventListener('click', handleClickOutside);

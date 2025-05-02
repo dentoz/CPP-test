@@ -1,5 +1,3 @@
-import Echo from 'laravel-echo';
-
 window._ = require('lodash');
 
 /**
@@ -30,20 +28,3 @@ window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 //     cluster: process.env.MIX_PUSHER_APP_CLUSTER,
 //     forceTLS: true
 // });
-
-const userData = JSON.parse(localStorage.getItem('token') ?? '{}');
-
-window.Echo = new Echo({
-    broadcaster: 'pusher',
-    key: 'localkey',
-    wsHost: window.location.hostname,
-    wsPort: 6001,
-    forceTLS: false,
-    disableStats: true,
-    authEndpoint: '/broadcasting/auth',
-    auth: {
-        headers: {
-            Authorization: `Bearer ${userData.token}`
-        }
-    }
-});

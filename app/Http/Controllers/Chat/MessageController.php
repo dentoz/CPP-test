@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Chat;
 
-use App\Events\MessageSent;
 use App\Http\Controllers\Controller;
 use App\Models\ChatRoom;
 use App\Models\ChatRoomUser;
 use App\Models\Message;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class MessageController extends Controller
 {
@@ -15,8 +15,6 @@ class MessageController extends Controller
     {
         $isMember = ChatRoomUser::where('chat_room_id', $chatRoom->id)
             ->where('user_id', $request->user()->id)->exists();
-
-        var_dump($isMember);
 
         if (!$isMember) {
             return response()->json(['message' => 'Unauthorized'], 403);
@@ -27,7 +25,12 @@ class MessageController extends Controller
             ->orderBy('created_at', 'asc')
             ->get();
 
-        return response()->json($messages);
+        return response()->json([
+            'status' => 200,
+            'message' => 'ok',
+            'error' => null,
+            'data' => $messages
+        ], 200);
     }
 
     public function store(Request $request, ChatRoom $chatRoom)
@@ -46,9 +49,19 @@ class MessageController extends Controller
             'user_id' => $request->user()->id,
             'message' => $request->message
         ]);
-    
-        broadcast(new MessageSent($message))->toOthers();
-    
-        return response()->json($message);
+
+        Http::post('http://localhost:3000/send-message', [
+            'chat_room_id' => $chatRoom->id,
+            'user' => $request->user()->email,
+            'id' => $message->id,
+            'message' => $request->message
+        ]);
+
+        return response()->json([
+            'status' => 200,
+            'message' => 'ok',
+            'error' => null,
+            'data' => $message
+        ], 200);
     }
 }

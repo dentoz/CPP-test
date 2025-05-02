@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Chat;
 
+use App\Events\UserInvited;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\InvitationRequest;
 use App\Models\ChatRoom;
@@ -58,7 +59,7 @@ class InvitationController extends Controller
                 'status' => 200,
                 'message' => 'ok.',
                 'error' => null,
-                'data' => 'user invited'
+                'data' => ['chat_room_id' => $chatRoomId]
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -83,6 +84,11 @@ class InvitationController extends Controller
                 'chat_room_id' => $invitation->chat_room_id,
                 'user_id' => $invitation->to_user_id,
             ]);
+
+            Http::post('http://localhost:3000/join', [
+                'roomId' => "chat.room.{$invitation->chat_room_id}",
+                'user' => $request->user()->email,
+            ]);
         }
 
         $fromUser = User::find($invitation->from_user_id);
@@ -106,7 +112,7 @@ class InvitationController extends Controller
             'status' => 200,
             'message' => 'ok',
             'error' => null,
-            'data' => 'Invitation ' . $request->status
+            'data' => ['chat_room_id' => $invitation->chat_room_id]
         ], 200);
     }
 

@@ -29,22 +29,21 @@ return [
     */
 
     'connections' => [
-
+        'default' => env('BROADCAST_DRIVER', 'pusher'),
         'pusher' => [
             'driver' => 'pusher',
-            'key' => env('PUSHER_APP_KEY'),
-            'secret' => env('PUSHER_APP_SECRET'),
-            'app_id' => env('PUSHER_APP_ID'),
+            'key' => '746d9aa45990c6441201',
+            'secret' => '50d543d287077ebd390d',
+            'app_id' => '1984939',
             'options' => [
-                'cluster' => env('PUSHER_APP_CLUSTER'),
+                'cluster' =>'mt1',
                 'useTLS' => false,
-                'host' => env('PUSHER_HOST'),
-                'port' => env('PUSHER_PORT'),
-                'scheme' => env('PUSHER_SCHEME'),
+                'host' => '127.0.0.1',
+                'port' => '6001',
+                'scheme' => 'http',
                 'encrypted' => false,
             ],
         ],
-
         'ably' => [
             'driver' => 'ably',
             'key' => env('ABLY_KEY'),

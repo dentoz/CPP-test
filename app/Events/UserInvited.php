@@ -4,33 +4,41 @@ namespace App\Events;
 
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PresenceChannel;
-use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
-use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Support\Facades\Log;
 
-class UserInvited
+class UserInvited implements ShouldBroadcastNow
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use InteractsWithSockets;
 
-    /**
-     * Create a new event instance.
-     *
-     * @return void
-     */
-    public function __construct()
+    public $chatRoomId;
+    public $user;
+
+    public function __construct($user, $chatRoomId)
     {
-        //
+        $this->chatRoomId = $chatRoomId;
+        $this->user = $user;
     }
 
-    /**
-     * Get the channels the event should broadcast on.
-     *
-     * @return \Illuminate\Broadcasting\Channel|array
-     */
     public function broadcastOn()
     {
-        return new PrivateChannel('channel-name');
+        Log::info('Broadcasting to chat.room.aja');
+        return new Channel("chat.room");
+    }
+
+    public function broadcastAs()
+    {
+        return 'user.invited';
+    }
+
+    public function broadcastWith()
+    {   
+        Log::info('Broadcasting message:', [
+            'message' => "{$this->user->name} was invited!",
+        ]);
+
+        return [
+            'message' => "{$this->user->name} was invited!"
+        ];
     }
 }

@@ -1,13 +1,3 @@
-<!-- <template>
-    <div>
-      <h1>Chat Room {{ roomId }}</h1>
-      <div v-for="msg in messages" :key="msg.id">
-        <strong>{{ msg.user.name }}</strong>: {{ msg.message }}
-      </div>
-      <input v-model="newMessage" @keyup.enter="sendMessage" placeholder="Type a message..." />
-    </div>
-  </template> -->
-
 <template>
   <v-app>
     <div class="dashboard" ref="showSidebar">
@@ -41,7 +31,45 @@
         </div>
         <div v-else>
           <h2>Chatroom - {{ chatAttributes.topic }}</h2>
-          
+          <v-row class="h-100" no-gutters>
+            <!-- Sidebar: Users -->
+            <v-col cols="3" class="pa-2">
+              <v-card class="h-100">
+                <v-card-title>Users</v-card-title>
+                <v-card-text class="overflow-auto">
+                  <v-list density="compact">
+                    <v-list-item v-for="user in users" :key="user.id">
+                      <v-list-item-title>{{ user.email }}</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-card-text>
+                <v-card-actions>
+                  <v-btn color="error" @click="leaveChat">Leave Chat</v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-col>
+
+            <!-- Main Chat Area -->
+            <v-col cols="9" class="pa-2 d-flex flex-column h-100">
+              <v-card class="flex-grow-1 overflow-auto">
+                <v-card-text>
+                  <div v-for="(msg, index) in messages" :key="index" class="mb-2">
+                    <strong>{{ msg.user }}:</strong> {{ msg.message }}
+                  </div>
+                </v-card-text>
+              </v-card>
+
+              <v-card class="mt-2">
+                <v-card-text>
+                  <v-form @submit.prevent="sendMessage">
+                    <v-text-field v-model="newMessage" placeholder="Type a message" outlined dense hide-details
+                      @keydown.enter.prevent="sendMessage" />
+                    <v-btn color="primary" @click="sendMessage">Send</v-btn>
+                  </v-form>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
         </div>
       </section>
       <Sidebar :showSidebar="showSidebar"></Sidebar>
@@ -50,13 +78,14 @@
 </template>
 
 <script setup>
-import { onMounted, ref, onUnmounted } from 'vue';
-import { useRoute } from 'vue-router';
-import axios from 'axios';
+import { onMounted, ref, onUnmounted, watch, provide } from 'vue';
 import Header from '../components/HeaderComponent.vue';
 import Sidebar from '../components/sidebarComponent.vue';
 import * as yup from 'yup';
 import { useField, useForm } from 'vee-validate';
+import { io } from 'socket.io-client';
+
+const socket = io('http://localhost:3000'); // or your deployed URL
 
 const userData = JSON.parse(localStorage.getItem('token') ?? '{}');
 const showSidebar = ref(false);
@@ -65,16 +94,18 @@ const toggleSidebar = (state) => {
 };
 const drawer = ref(null);
 
-const route = useRoute();
-const roomId = route.query.id;
+const roomId = ref(0);
 const loading = ref(false)
 const messages = ref([]);
 const newMessage = ref('');
+const users = ref([]);
 const chatAttributes = ref({
   topic: '',
   chatRoomUsers: '',
   nickname: userData.nick_name
 })
+
+provide('invitedUser', chatAttributes.value.chatRoomUsers);
 
 const schema = yup.object().shape({
   nickname: yup.string().required('nick name is required').min(3, 'nick name must be at least 3 characters'),
@@ -144,9 +175,11 @@ const onSubmit = handleSubmit(async (values) => {
   loading.value = true;
   const createdChatRoom = await createChatroom(values);
   const invitedUser = await inviteUser(createdChatRoom);
+  users.value.push({ id: 1, email: values.invite })
   loading.value = false;
 
   if (invitedUser) {
+    roomId.value = invitedUser.chat_room_id;
     chatAttributes.value = {
       topic: values.topic,
       chatRoomUsers: values.invite,
@@ -155,27 +188,51 @@ const onSubmit = handleSubmit(async (values) => {
   }
 });
 
-onMounted(async () => {
-  const res = await axios.get(`/api/chat-rooms/${roomId}/messages`, {
+const sendMessage = async () => {
+  if (!newMessage.value) return;
+
+  const response = await fetch(`/api/chat-rooms/${roomId.value}/messages`, {
+    method: 'POST',
     headers: {
+      'Accept': 'application/json',
       'Content-Type': 'application/json',
-      'authorization': `Bearer ${userData.token}`
+      'authorization': `Bearer ${userData.token}`,
+      // 'X-XSRF-TOKEN': csrfToken
+    },
+    body: JSON.stringify({
+      message: newMessage.value
+    }),
+    credentials: 'include'
+  });
+
+  const responseData = await response.json();
+  if (!response.ok) {
+    loading.value = false;
+    return alert(responseData.message);
+  }
+
+  newMessage.value = '';
+};
+
+const getMessages = async (roomId) => {
+  const response = await fetch(`/api/chat-rooms/${roomId}/messages`, {
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'authorization': `Bearer ${userData.token}`,
+      // 'X-XSRF-TOKEN': csrfToken
     },
     credentials: 'include'
   });
-  messages.value = res.data;
 
-  window.Echo.join(`chat-room.${roomId}`)
-    .listen('MessageSent', (e) => {
-      messages.value.push(e);
-    });
-});
+  const responseData = await response.json();
+  if (!response.ok) {
+    loading.value = false;
+    return alert(responseData.message);
+  }
 
-const sendMessage = async () => {
-  if (!newMessage.value) return;
-  await axios.post(`/chat-rooms/${roomId}/messages`, { message: newMessage.value });
-  newMessage.value = '';
-};
+  return responseData.data;
+}
 
 const handleClickOutside = (event) => {
   if (drawer.value && !drawer.value.contains(event.target)) {
@@ -183,12 +240,33 @@ const handleClickOutside = (event) => {
   }
 };
 
+watch(() => roomId.value, async (newVal, oldVal) => {
+  if (oldVal) {
+    console.log('xxxxxxxxxggggggleave')
+    socket.emit('leave-room', `chat.room.${oldVal}`);
+  }
+  if (newVal) {
+    socket.emit('join-room', `chat.room.${newVal}`);
+    const data = await getMessages(newVal)
+    messages.value = data
+  }
+});
+
 onMounted(async () => {
   document.addEventListener('click', handleClickOutside);
+  socket.on('user-invited', (data) => {
+    users.value.push({ id: users.value.length + 1, email: data.user })
+  });
+  socket.on('new-message', (data) => {
+    console.log('xxxxxtestxxxxx', data)
+    messages.value.push({ id: data.id, user: data.user, message: data.message })
+  })
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
+  socket.off('user-invited');
+  socket.off('new-message');
 });
 
 </script>

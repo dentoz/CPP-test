@@ -13,7 +13,7 @@
 
         </v-app-bar>
         <v-sheet class="profile-menu" :height="40" :width="200" :elevation="8" v-if="showIconButtonMenu">
-            <button>
+            <button @click="handleLogout">
                 <div class="profile-menu-button">
                     <v-icon size="16" style="color: #f8f9fa;">mdi-logout</v-icon>
                     Logout
@@ -25,10 +25,12 @@
 
 <script setup>
 import { defineEmits, ref } from 'vue';
+import { useRouter } from 'vue-router';
 
 const userData = JSON.parse(localStorage.getItem('token') ?? '{}');
 const emit = defineEmits(['sidebarHandler']);
 
+const router = useRouter();
 const showIconButtonMenu = ref(false);
 const showSidebar = ref(false);
 
@@ -40,6 +42,25 @@ const toggleSidebar = () => {
     showSidebar.value = !showSidebar.value;
     emit('sidebarHandler', showSidebar.value);
 };
+
+const handleLogout = async () => {
+    const response = await fetch(`/api/logout`, {
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'authorization': `Bearer ${userData.token}`,
+            // 'X-XSRF-TOKEN': csrfToken
+        },
+        credentials: 'include'
+    });
+
+    const responseData = await response.json();
+    if (!response.ok) {
+        return alert(responseData.message);
+    }
+
+    return router.push('/');
+}
 </script>
 
 <style scoped>
