@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import { provide } from 'vue'
+import { onMounted, provide } from 'vue'
 import { onMessage, messaging } from "./firebase";
 import { showInviteToast } from './utils/inviteToast';
 import { useToast } from "vue-toastification";
@@ -15,9 +15,10 @@ export default {
     prefetchedData: Object
   },
   setup(props) {
+
     provide('prefetchedData', props.prefetchedData);
     const toast = useToast();
-    
+
     onMessage(messaging, (payload) => {
       console.log('📥 FCM message received in foreground:', payload);
       if (payload.data.type === 'INVITE_REQUESTED') {

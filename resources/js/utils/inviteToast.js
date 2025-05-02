@@ -27,6 +27,7 @@ export function showInviteToast(data) {
                             },
                         }
                     );
+                    window.location.href = `/chatroom/new-chatroom?id=${data.chat_room_id}`;
                 },
                 onReject: async () => {
                     // Handle reject

@@ -52,4 +52,9 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(ChatRoom::class, 'chat_room_users');
     }
+
+    public function messages()
+    {
+        return $this->hasMany(Message::class);
+    }
 }

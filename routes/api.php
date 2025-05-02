@@ -35,5 +35,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/chat-rooms/new', [MessageController::class, 'newChat']);
     Route::post('/broadcasting/auth', [BroadcastAuthController::class, 'authenticate']);
     Route::get('/logout', [GoogleAuthController::class, 'logout']);
+    Route::get('/chat-rooms/{chatRoom}/all-messages-attribute', [MessageController::class, 'messageAttribute']);
 });
     

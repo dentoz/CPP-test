@@ -83,17 +83,18 @@ import Header from '../components/HeaderComponent.vue';
 import Sidebar from '../components/sidebarComponent.vue';
 import * as yup from 'yup';
 import { useField, useForm } from 'vee-validate';
-import { io } from 'socket.io-client';
-
-const socket = io('http://localhost:3000'); // or your deployed URL
+import socket from '../socket';
+import { useRoute } from 'vue-router';
 
 const userData = JSON.parse(localStorage.getItem('token') ?? '{}');
 const showSidebar = ref(false);
 const toggleSidebar = (state) => {
   showSidebar.value = state;
 };
-const drawer = ref(null);
+const route = useRoute();
+const chatRoomId = route.query.id
 
+const drawer = ref(null);
 const roomId = ref(0);
 const loading = ref(false)
 const messages = ref([]);
@@ -191,7 +192,7 @@ const onSubmit = handleSubmit(async (values) => {
 const sendMessage = async () => {
   if (!newMessage.value) return;
 
-  const response = await fetch(`/api/chat-rooms/${roomId.value}/messages`, {
+  const response = await fetch(`/api/chat-rooms/${chatRoomId ?? roomId.value}/messages`, {
     method: 'POST',
     headers: {
       'Accept': 'application/json',
@@ -234,6 +235,26 @@ const getMessages = async (roomId) => {
   return responseData.data;
 }
 
+const getAllChats = async (roomId) => {
+  const response = await fetch(`/api/chat-rooms/${roomId}/all-messages-attribute`, {
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'authorization': `Bearer ${userData.token}`,
+      // 'X-XSRF-TOKEN': csrfToken
+    },
+    credentials: 'include'
+  });
+
+  const responseData = await response.json();
+  if (!response.ok) {
+    loading.value = false;
+    return alert(responseData.message);
+  }
+
+  return responseData.data;
+}
+
 const handleClickOutside = (event) => {
   if (drawer.value && !drawer.value.contains(event.target)) {
     showSidebar.value = false;
@@ -242,7 +263,6 @@ const handleClickOutside = (event) => {
 
 watch(() => roomId.value, async (newVal, oldVal) => {
   if (oldVal) {
-    console.log('xxxxxxxxxggggggleave')
     socket.emit('leave-room', `chat.room.${oldVal}`);
   }
   if (newVal) {
@@ -258,9 +278,33 @@ onMounted(async () => {
     users.value.push({ id: users.value.length + 1, email: data.user })
   });
   socket.on('new-message', (data) => {
-    console.log('xxxxxtestxxxxx', data)
+    console.log('gggg', data)
     messages.value.push({ id: data.id, user: data.user, message: data.message })
   })
+
+  if (chatRoomId) {
+    socket.emit('join-room', `chat.room.${chatRoomId}`);
+    const data = await getAllChats(chatRoomId);
+    chatAttributes.value = {
+      topic: data.name,
+      chatRoomUsers: data.chat_room_users[0].email,
+      nickname: data.user.nick_name
+    }
+
+    data.chat_room_users.map((user) => {
+      users.value.push({
+        id: user.id,
+        email: user.email
+      })
+    })
+
+    data.messages.map(message => {
+      messages.value.push({
+        user: message.user.email,
+        message: message.message
+      })
+    })
+  }
 });
 
 onUnmounted(() => {

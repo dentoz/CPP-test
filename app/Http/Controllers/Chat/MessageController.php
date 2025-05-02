@@ -64,4 +64,17 @@ class MessageController extends Controller
             'data' => $message
         ], 200);
     }
+
+    public function messageAttribute(ChatRoom $chatRoom)
+    {
+        $chatRoomData = $chatRoom->with(['user', 'chatRoomUsers'])->first()->toArray();
+        $messageData = ChatRoom::with('messages.user')->find($chatRoom->id)->toArray();
+        $chatRoomData['messages'] = $messageData['messages'];
+        return response()->json([
+            'status' => 200,
+            'message' => 'ok',
+            'error' => null,
+            'data' => $chatRoomData
+        ], 200);
+    }
 }
